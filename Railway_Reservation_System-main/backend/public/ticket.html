@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Ticket</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: fadeIn 0.8s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            transform: scaleX(0);
+            animation: growLine 1.5s ease forwards;
+        }
+        
+        @keyframes growLine {
+            to {
+                transform: scaleX(1);
+            }
+        }
+        
+        #ticketDetails {
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            margin-bottom: 25px;
+        }
+        
+        #ticketDetails h2 {
+            text-align: center;
+            color: #3498db;
+            margin-bottom: 20px;
+        }
+        
+        #ticketDetails p {
+            margin: 12px 0;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideInRight 0.5s ease forwards;
+            animation-delay: calc(var(--i) * 0.1s);
+        }
+        
+        @keyframes slideInRight {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        #ticketDetails p:hover {
+            background-color: #e8f4fc;
+            transform: translateX(5px);
+        }
+        
+        button {
+            background-color: #34c759;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s ease;
+            transform: scale(1);
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #downloadBtn {
+            background-color: #34c759;
+        }
+        
+        #cancelBtn {
+            background-color: #ff3b30;
+        }
+        
+        /* Animation for shimmer effect while loading */
+        .shimmer {
+            position: relative;
+            background: #f6f7f8;
+            background-image: linear-gradient(
+                to right,
+                #f6f7f8 0%,
+                #edeef1 20%,
+                #f6f7f8 40%,
+                #f6f7f8 100%
+            );
+            background-size: 800px 104px;
+            animation: shimmer 1.5s infinite linear;
+            height: 300px;
+            border-radius: 8px;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -468px 0;
+            }
+            100% {
+                background-position: 468px 0;
+            }
+        }
+        
+        /* Animation for button click effect */
+        .button-click {
+            animation: clickEffect 0.5s ease;
+        }
+        
+        @keyframes clickEffect {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(52, 199, 89, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+            }
+        }
+        
+        /* Animated success checkmark for download */
+        .success-checkmark {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            margin-left: 10px;
+            position: relative;
+        }
+        
+        .checkmark {
+            width: 10px;
+            height: 20px;
+            border-right: 3px solid white;
+            border-bottom: 3px solid white;
+            transform: rotate(45deg);
+            margin-left: 5px;
+            opacity: 0;
+            animation: checkmarkAppear 0.8s ease forwards;
+            animation-delay: 0.2s;
+        }
+        
+        @keyframes checkmarkAppear {
+            from {
+                opacity: 0;
+                transform: rotate(45deg) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: rotate(45deg) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Ticket</h1>
+        <div id="ticketDetails" class="shimmer">
+        </div>
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+            <button onclick="location.href='user-dashboard.html'">Back to Dashboard</button>
+            <button onclick="downloadTicket()" id="downloadBtn">Download Ticket (PDF)</button>
+            <button onclick="cancelTicket()" id="cancelBtn">Cancel Ticket</button>
+        </div>
+    </div>
+    <script>
+        let currentTicketId = null;
+        function generateTransactionId() {
+            return 'TXN' + Math.floor(1000000000 + Math.random() * 9000000000);
+        }
+        async function loadTicket() {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user || !user._id) {
+                alert("Please log in to view your ticket.");
+                window.location.href = "login.html";
+                return;
+            }
+            try {
+                console.log("Fetching latest ticket for user:", user._id);
+                const response = await fetch(`/api/tickets/latest/${user._id}`);
+                console.log("Response from backend:", response);
+                if (response.ok) {
+                    const ticket = await response.json();
+                    console.log("Ticket details fetched successfully:", ticket);
+                    document.getElementById("ticketDetails").classList.remove("shimmer");
+                    currentTicketId = ticket._id;
+                    displayTicket(ticket);
+                } else {
+                    const error = await response.json();
+                    console.error("Failed to fetch ticket details. Error:", error);
+                    document.getElementById("ticketDetails").classList.remove("shimmer");
+                    alert(error.error || "Failed to fetch ticket details.");
+                }
+            } catch (err) {
+                console.error("Error fetching ticket details:", err);
+                document.getElementById("ticketDetails").classList.remove("shimmer");
+                alert("An error occurred while fetching ticket details.");
+            }
+        }
+        function displayTicket(ticket) {
+            if (!ticket) {
+                document.getElementById("ticketDetails").innerHTML = `
+                    <p style="text-align: center; padding: 20px;">No ticket found! Book a ticket first.</p>
+                    <button onclick="location.href='book-now.html'" style="display: block; margin: 0 auto;">Book Ticket Now</button>
+                `;
+                return;
+            }
+            if (!ticket.transactionId) {
+                ticket.transactionId = generateTransactionId();
+            }
+            document.getElementById("ticketDetails").innerHTML = '<h2>Ticket Details</h2>';
+            const details = [
+                { label: "Transaction ID", value: ticket.transactionId },
+                { label: "Train Name", value: ticket.trainName },
+                { label: "Train Number", value: ticket.trainNumber },
+                { label: "From", value: ticket.fromStation },
+                { label: "To", value: ticket.toStation },
+                { label: "Journey Date", value: new Date(ticket.journeyDate).toLocaleDateString() },
+                { label: "Passenger Name", value: ticket.passengerName },
+                { label: "Class", value: ticket.trainClass },
+                { label: "Seats Booked", value: ticket.seats },
+                { label: "Payment", value: `₹${ticket.payment}` },
+                { label: "Booking Date & Time", value: new Date(ticket.bookingDate || Date.now()).toLocaleString() }
+            ];
+            details.forEach((detail, index) => {
+                setTimeout(() => {
+                    const p = document.createElement('p');
+                    p.innerHTML = `<strong>${detail.label}:</strong> ${detail.value}`;
+                    p.style.setProperty('--i', index);
+                    document.getElementById("ticketDetails").appendChild(p);
+                }, index * 100);
+            });
+        }
+        function downloadTicket() {
+            const downloadBtn = document.getElementById("downloadBtn");
+            downloadBtn.classList.add("button-click");
+            downloadBtn.innerHTML = "Preparing PDF...";
+            downloadBtn.disabled = true;
+            setTimeout(() => {
+                const { jsPDF } = window.jspdf;
+                let doc = new jsPDF();
+                let ticketDetails = document.getElementById("ticketDetails").innerText;
+                doc.text(ticketDetails, 10, 10);
+                doc.save("ticket.pdf");
+                downloadBtn.innerHTML = `Download Ticket (PDF) <span class="success-checkmark"><span class="checkmark"></span></span>`;
+                downloadBtn.disabled = false;
+                downloadBtn.style.backgroundColor = "#28a745";
+                setTimeout(() => {
+                    downloadBtn.style.backgroundColor = "#34c759";
+                    downloadBtn.innerHTML = "Download Ticket (PDF)";
+                }, 2000);
+            }, 800);
+        }
+        async function cancelTicket() {
+            if (!currentTicketId) {
+                alert("No ticket to cancel.");
+                return;
+            }
+            const cancelBtn = document.getElementById("cancelBtn");
+            cancelBtn.classList.add("button-click");
+            const confirmCancel = confirm("Are you sure you want to cancel this ticket?");
+            if (!confirmCancel) return;
+            cancelBtn.innerHTML = "Cancelling...";
+            cancelBtn.disabled = true;
+            try {
+                const response = await fetch(`/api/tickets/cancel/${currentTicketId}`, {
+                    method: "DELETE",
+                });
+                if (response.ok) {
+                    cancelBtn.innerHTML = "Cancelled!";
+                    setTimeout(() => {
+                        alert("Ticket canceled successfully.");
+                        window.location.href = "user-dashboard.html"; // Redirect to user-dashboard.html
+                    }, 500);
+                } else {
+                    const error = await response.json();
+                    alert(error.error || "Failed to cancel ticket.");
+                    cancelBtn.innerHTML = "Cancel Ticket";
+                    cancelBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error("Error canceling ticket:", err);
+                alert("An error occurred while canceling the ticket.");
+                cancelBtn.innerHTML = "Cancel Ticket";
+                cancelBtn.disabled = false;
+            }
+        }
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function() {
+                this.classList.add('button-click');
+                setTimeout(() => {
+                    this.classList.remove('button-click');
+                }, 500);
+            });
+        });
+        window.onload = loadTicket;
+    </script>
+</body>
+</html>

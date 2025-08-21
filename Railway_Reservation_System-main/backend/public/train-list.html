@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Available Trains</title>
+  <style>
+    /* Base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transform: translateY(30px);
+      opacity: 0;
+      animation: slideUp 0.6s ease forwards;
+    }
+    
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+      position: relative;
+      display: inline-block;
+      left: 50%;
+      transform: translateX(-50%);
+      padding-bottom: 10px;
+    }
+    
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 3px;
+      background: linear-gradient(to right, #3498db, #2ecc71);
+      animation: growLine 1.5s ease-in-out forwards 0.5s;
+    }
+    
+    @keyframes growLine {
+      to {
+        width: 100%;
+      }
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+    
+    table thead {
+      background-color: #3498db;
+      color: white;
+    }
+    
+    table th {
+      padding: 15px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    table th:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+      animation: shimmer 2s infinite;
+    }
+    
+    @keyframes shimmer {
+      100% {
+        left: 100%;
+      }
+    }
+    
+    table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    tr {
+      background-color: white;
+      transform: translateX(-20px);
+      opacity: 0;
+      animation: slideFadeIn 0.5s ease forwards;
+      animation-delay: calc(var(--i) * 0.1s);
+    }
+    
+    @keyframes slideFadeIn {
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    tr:hover {
+      background-color: #f5f9fc;
+      transition: background-color 0.3s ease;
+    }
+    
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      background-color: #3498db;
+      color: white;
+    }
+    
+    #trainList button {
+      background-color: #2ecc71;
+      transform: scale(1);
+      transition: all 0.3s ease;
+    }
+    
+    #trainList button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+    }
+    
+    #trainList button:active {
+      transform: scale(0.95);
+    }
+    
+    .container > button {
+      display: block;
+      margin: 0 auto;
+      background-color: #3498db;
+      box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    
+    .container > button:hover {
+      animation: none;
+      transform: scale(1.05);
+    }
+    
+    /* Loading spinner animation */
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      margin: 40px 0;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-top-color: #3498db;
+      animation: spin 1s infinite linear;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    /* Empty state animation */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards;
+    }
+    
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+    }
+    
+    .empty-train-icon path {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+      animation: drawLine 3s ease forwards;
+    }
+    
+    @keyframes drawLine {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+    
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #2ecc71;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateX(100%);
+      opacity: 0;
+      transition: all 0.5s ease;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  </style>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Available Trains</h1>
+    <div id="loadingSpinner" class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+    <div id="emptyState" class="empty-state" style="display: none;">
+      <svg class="empty-train-icon" viewBox="0 0 100 100" fill="none" stroke="#3498db" stroke-width="2">
+        <path d="M10,80 L90,80 M20,80 L20,60 L80,60 L80,80 M30,60 L30,40 L70,40 L70,60 M40,40 L40,30 L60,30 L60,40 M30,80 L35,90 M70,80 L65,90 M40,70 C40,73 37,75 35,75 C33,75 30,73 30,70 C30,67 33,65 35,65 C37,65 40,67 40,70 M70,70 C70,73 67,75 65,75 C63,75 60,73 60,70 C60,67 63,65 65,65 C67,65 70,67 70,70 M15,60 L85,60"></path>
+      </svg>
+      <h3>No trains available</h3>
+      <p>Try adjusting your search criteria</p>
+    </div>
+    <table id="trainsTable" style="display: none;">
+      <thead>
+        <tr>
+          <th>Train Number</th>
+          <th>Train Name</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Journey Date</th>
+          <th>Fare (INR)</th>
+          <th>Seats Available</th>
+          <th>Book Now</th>
+        </tr>
+      </thead>
+      <tbody id="trainList">
+      </tbody>
+    </table><br>
+    <button onclick="location.href='search-trains.html'">Back to Search</button>
+  </div>
+  <div id="toast" class="toast">Train selected for booking!</div>
+  <script>
+    async function loadTrains() {
+      try {
+        console.log("Fetching trains from backend...");
+        document.getElementById("loadingSpinner").style.display = "flex";
+        document.getElementById("trainsTable").style.display = "none";
+        document.getElementById("emptyState").style.display = "none";
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const response = await fetch("/api/trains");
+        if (response.ok) {
+          const trains = await response.json();
+          console.log("Trains data:", trains);
+          document.getElementById("loadingSpinner").style.display = "none";
+          if (trains.length > 0) {
+            document.getElementById("trainsTable").style.display = "table";
+            trains.forEach((train, index) => addTrainToTable(train, index));
+          } else {
+            document.getElementById("emptyState").style.display = "block";
+          }
+        } else {
+          const error = await response.json();
+          console.error("Failed to fetch trains:", error);
+          document.getElementById("loadingSpinner").style.display = "none";
+          document.getElementById("emptyState").style.display = "block";
+          alert("Failed to fetch trains. Please try again.");
+        }
+      } catch (error) {
+        console.error("An error occurred while fetching trains:", error);
+        document.getElementById("loadingSpinner").style.display = "none";
+        document.getElementById("emptyState").style.display = "block";
+        alert("An error occurred while fetching trains.");
+      }
+    }
+    function addTrainToTable(train, index) {
+      const trainList = document.getElementById("trainList");
+      const row = document.createElement("tr");
+      row.style.setProperty('--i', index + 1);
+      row.innerHTML = `
+        <td>${train.trainNumber}</td>
+        <td>${train.trainName}</td>
+        <td>${train.fromStation}</td>
+        <td>${train.toStation}</td>
+        <td>${new Date(train.journeyDate).toLocaleDateString()}</td>
+        <td>₹${train.fare}</td>
+        <td>${train.availableSeats}</td>
+        <td>
+          <button onclick='bookNow("${train._id}")'>Book Now</button>
+        </td>
+      `;
+      trainList.appendChild(row);
+    }
+    function bookNow(trainId) {
+      localStorage.setItem("selectedTrainId", trainId);
+      const toast = document.getElementById("toast");
+      toast.classList.add("show");
+      event.target.style.animation = "pulse 0.5s";
+      setTimeout(() => {
+        event.target.style.animation = "";
+      }, 500);
+      setTimeout(() => {
+        window.location.href = "book-now.html";
+      }, 800);
+    }
+    document.getElementById("toast").addEventListener("transitionend", function() {
+      if (this.classList.contains("show")) {
+        setTimeout(() => {
+          this.classList.remove("show");
+        }, 2000);
+      }
+    });
+    window.onload = loadTrains;
+  </script>
+</body>
+</html>
